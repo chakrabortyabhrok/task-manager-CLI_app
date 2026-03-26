@@ -11,3 +11,6 @@ class Tasks:
             "name": self.name,
             "status": self.status
         }
+    
+    def display_row(self):
+        return(f"{self.id:<3} | {self.name:<24} | {self.status}")

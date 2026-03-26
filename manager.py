@@ -3,6 +3,7 @@ import os
 from tasks import Tasks
 
 class TaskManager:
+
     def __init__(self):
         self._tasks = []
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,32 +11,49 @@ class TaskManager:
 
     def load_tasks(self):
         if not os.path.exists(self.file_name):
-            return []
+            print("-- File not found --\n")
+            return
         
         try:
             with open(self.file_name, "r") as file:
-                return json.load(file)
-            print(f"Loaded: {len(self.file_name)} tasks")
-        except json.JSONDecodeError:
-            return []
+                raw_data = json.load(file)
+            if isinstance(raw_data, list):
+                    tasks_data = raw_data
+
+            else:
+                raise ValueError("-- Invalid JSON Format --")
+            
+            self._tasks = []
+
+            for t in tasks_data:
+                new_obj = Tasks(
+                    id=t["id"],
+                    name=t["name"],
+                    status=t["status"]
+                )
+                self._tasks.append(new_obj)
+
+            print(f"Loaded: {len(self._tasks)} tasks")
+        except Exception as e:
+            print(f"Error Loading: {e}")
     
-    def save_tasks(tasks):
+    def save_tasks(self, tasks):
         with open(file, "w") as file:
             json.dump(tasks,file, indent=4)
         
-    def get_new_id(tasks):
+    def get_new_id(self, tasks):
         if not tasks:
             return 1
         else:
             return max(t["id"] for t in tasks ) + 1
     
-    def add_new_task(tasks, task_name):
-        new_task = {
-            "id": get_new_id(tasks),
-            "name": task_name,
-            "status": "pending"
-        }
-        tasks.append(new_task)
+    #def add_new_task(self, tasks, task_name):
+    #    new_task = {
+    #        "id": get_new_id(self),
+    #        "name": task_name,
+    #        "status": "pending"
+    #    }
+    #    tasks.append(new_task)
 
     def delete_task(tasks, task_id):
         for task in tasks:
@@ -44,110 +62,32 @@ class TaskManager:
                 return True
         return False
         
-def mark_as_done(tasks, task_id):
-    for task in tasks:
-        if task["id"] == task_id:
-            task["status"] = "done"
-            return True
-    return False
+    def mark_as_done(tasks, task_id):
+        for task in tasks:
+            if task["id"] == task_id:
+                task["status"] = "done"
+                return True
+        return False
 
-def mark_as_pending(tasks, task_id):
-    for task in tasks:
-        if task["id"] == task_id:
-            task["status"] = "pending"
-            return True
-    return False
+    def mark_as_pending(tasks, task_id):
+        for task in tasks:
+            if task["id"] == task_id:
+                task["status"] = "pending"
+                return True
+        return False
 
-def pending_tasks(tasks):
-    return [t for t in tasks if t["status"] == "pending"]
-def completed_tasks(tasks):
-    return [t for t in tasks if t["status"] == "done"]
+    def pending_tasks(tasks):
+        return [t for t in tasks if t["status"] == "pending"]
+    def completed_tasks(tasks):
+        return [t for t in tasks if t["status"] == "done"]
 
-MENU = """
-Add Task              - a
-Delete Task           - d
-Show Tasks            - s
-Mark Tasks as done    - u
-Mark Tasks as pending - b
-Pending Tasks         - p
-Completed Tasks       - c
-Exit app              - e
-"""
-def print_tasks(tasks):
-    if not tasks:
-        print("-- No tasks found --")
-        return
-    print("\nID  |         TASKS         | STATUS")
-    print("-"*40)
-    for task in tasks:
-        print(f"{task["id"]:<3} | {task["name"]:<24} | {task["status"]}")
-    print("-"*40)
+    def print_tasks(self):
+        if not self._tasks:
+            print("-- No tasks found --")
+            return
+        print("\nID  |           TASKS          | STATUS")
+        print("-"*40)
+        for task in self._tasks:
+            print(task.display_row())
+        print("-"*40)
         
-def main():
-    tasks = load_tasks()
-    print("-- Welcome to the Task Manager!! --")
-    while True:
-        print(MENU)
-        choice = input("Enter your choice: \n").lower().strip()
-
-        if choice == "a":
-            task_name = input("Enter the task name: \n")
-            add_new_task(tasks, task_name)
-            save_tasks(tasks)
-            print("-- Task added succesfuly --")
-
-        elif choice == "s":
-            print_tasks(tasks)
-
-        elif choice == "d":
-            try:
-                task_id = int(input("Enter the task ID: \n"))
-                if delete_task(tasks, task_id):
-                    save_tasks(tasks)
-                    print("-- Task deleted succesfuly --")
-                else:
-                    print("-- Enter a valid ID --")
-            except ValueError:
-                print("-- Invalid Format --")
-
-        elif choice == "b":
-            try:
-                task_id = int(input("Enter the task ID: \n"))
-                if mark_as_pending(tasks, task_id):
-                    save_tasks(tasks)
-                    print("-- Task succesfuly updated --")
-                else:
-                    print("-- Enter a valid ID --")
-            except ValueError:
-                print("-- Invalid Format --")
-
-
-        elif choice == "u":
-            try:
-                task_id = int(input("Enter the task ID: \n"))
-                if mark_as_done(tasks, task_id):
-                    save_tasks(tasks)
-                    print("-- Task succesfuly updated --")
-                else:
-                    print("-- Enter a valid ID --")
-            except ValueError:
-                print("-- Invalid Format --")
-        
-        elif choice == "p":
-            print_tasks(pending_tasks(tasks))
-
-        elif choice == "c":
-            print_tasks(completed_tasks(tasks))
-            
-        elif choice == "e":
-            print("-- Goodbye! --")
-            break
-
-        else:
-            print("-- Invalid choice --")
-
-
-
-
-if __name__ == "__main__":
-    main()
